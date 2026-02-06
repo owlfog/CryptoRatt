@@ -1,0 +1,72 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./conf:/app/conf
+      - static_files:/app/static
+    environment:
+      - DJANGO_SETTINGS_MODULE=apps.settings
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput --clear &&
+             gunicorn --bind 0.0.0.0:8000 --workers 2 apps.ratticweb.wsgi:application"
+
+  db:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=rattic_root_password
+      - MYSQL_DATABASE=ratticdb
+      - MYSQL_USER=rattic
+      - MYSQL_PASSWORD=rattic_password
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prattic_root_password"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  celery:
+    build: .
+    command: celery -A apps.ratticweb.celery worker -l info
+    volumes:
+      - ./conf:/app/conf
+    environment:
+      - DJANGO_SETTINGS_MODULE=apps.settings
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  redis_data:
+  static_files:

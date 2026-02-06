@@ -1,8 +1,40 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
-from django.forms import Form, ModelForm, SelectMultiple, Select, PasswordInput, CharField, TextInput, ClearableFileInput, FileField, Textarea, ModelMultipleChoiceField
+from django.forms import Form, ModelForm, SelectMultiple, Select, PasswordInput, CharField, TextInput, ClearableFileInput, FileInput, FileField, Textarea, ModelMultipleChoiceField
+from django.forms.widgets import FILE_INPUT_CONTRADICTION
 
 from apps.cred.models import Project, Cred, Tag, Group
+
+
+class MultipleFileInput(ClearableFileInput):
+    """Custom widget for multiple file uploads in Django 4.x"""
+    allow_multiple_selected = True
+
+    def __init__(self, attrs=None):
+        default_attrs = {'multiple': True, 'class': 'custom-file-input'}
+        if attrs:
+            default_attrs.update(attrs)
+        super().__init__(attrs=default_attrs)
+
+    def value_from_datadict(self, data, files, name):
+        if hasattr(files, 'getlist'):
+            return files.getlist(name)
+        return files.get(name)
+
+
+class MultipleFileField(FileField):
+    """Custom field for multiple file uploads"""
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("widget", MultipleFileInput())
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        single_file_clean = super().clean
+        if isinstance(data, (list, tuple)):
+            result = [single_file_clean(d, initial) for d in data]
+        else:
+            result = [single_file_clean(data, initial)]
+        return result
 
 class ExportForm(Form):
     password = CharField(widget=PasswordInput(
@@ -31,7 +63,7 @@ class ProjectForm(ModelForm):
         self.fields['description'].label = _('Project description')
         self.fields['credentials'].required = False
 
-        if self.instance:
+        if self.instance and self.instance.pk:
             self.fields["credentials"].initial = (
                 self.instance.cred_set.all().values_list('id', flat=True)
         )
@@ -51,9 +83,7 @@ class ProjectForm(ModelForm):
 class CredForm(ModelForm):
     
     iconname = CharField(required=False)
-    uploads = FileField(
-        widget=ClearableFileInput(attrs={'multiple': True, 'class': 'custom-file-input'}),
-        required=False)
+    uploads = MultipleFileField(required=False)
 
     def __init__(self, requser, *args, **kwargs):
         super(CredForm, self).__init__(*args, **kwargs)

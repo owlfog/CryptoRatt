@@ -1,9 +1,9 @@
 mock
-moto>=0.3.1
-nose
-django_nose
-nose-testconfig
-selenium
-pep8==1.5.0
-pyflakes
+moto>=4.2.0
+pytest>=7.4.0
+pytest-django>=4.5.0
+selenium>=4.15.0
+pycodestyle>=2.11.0
+pyflakes>=3.1.0
+flake8>=6.1.0
 

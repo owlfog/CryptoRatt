@@ -6,6 +6,7 @@ from django.contrib.auth.views import (
     PasswordResetView,
     PasswordChangeDoneView,
     PasswordResetConfirmView,
+    PasswordResetCompleteView,
 )
 
 from apps.account.views import (
@@ -42,10 +43,11 @@ urlpatterns = [
 # URLs we don't want enabled with LDAP
 if not settings.LDAP_ENABLED and not settings.SSO_ENABLED or settings.DEBUG:
     urlpatterns += [
-        path("reset/", PasswordResetView.as_view(), {
-            "post_reset_redirect": "/account/reset/done/",
-            "template_name": "password_reset.html",
-        },
+        path("reset/", PasswordResetView.as_view(
+            success_url="/account/reset/done/",
+            template_name="password_reset.html",
+            email_template_name="password_reset_email.html",
+        ),
         name="password_reset",),
         path(
             "reset/done/",
@@ -55,12 +57,18 @@ if not settings.LDAP_ENABLED and not settings.SSO_ENABLED or settings.DEBUG:
         ),
         re_path(
             r"^reset/(?P<uidb64>[0-9A-Za-z]+)-(?P<token>.+)/$",
-            PasswordResetConfirmView.as_view(),
-            {
-                "post_reset_redirect": "/",
-                "template_name": "password_reset_confirm.html",
-            },
+            PasswordResetConfirmView.as_view(
+                template_name="password_reset_confirm.html",
+                success_url="/account/reset/complete/",
+            ),
             name="password_reset_confirm",
+        ),
+        path(
+            "reset/complete/",
+            PasswordResetCompleteView.as_view(
+                template_name="password_reset_complete.html",
+            ),
+            name="password_reset_complete",
         ),
         path(
             "changepass/",

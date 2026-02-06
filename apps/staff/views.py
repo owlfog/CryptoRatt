@@ -8,7 +8,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.models import User, Group
 from django.conf import settings
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django_otp import user_has_device, devices_for_user
 from django.core.files.uploadedfile import SimpleUploadedFile
 

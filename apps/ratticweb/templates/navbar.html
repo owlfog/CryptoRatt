@@ -1,4 +1,4 @@
-{% load static from staticfiles %}
+{% load static %}
 {% load custom_tags %}
 {% load i18n %}
 {% url "cred:cred_list" "special" "changeq" as cred_views_viewqueue %}
@@ -58,7 +58,10 @@
         <a class="nav-link" href="{% url "account:profile" %}">{% trans "Profile" %}</a>
       </li>
       <li class="nav-item d-block d-sm-none">
-        <a class="nav-link" href="{% url "account:logout" %}">{% trans "Logout" %}</a>
+        <form method="post" action="{% url "account:logout" %}" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="nav-link btn btn-link">{% trans "Logout" %}</button>
+        </form>
       </li>
     </ul>
 
@@ -108,7 +111,10 @@
           {% endif %}
 
           <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="{% url "account:logout" %}"><i class="fas fa-sign-out-alt"></i> {% trans "Logout" %}</a>
+          <form method="post" action="{% url "account:logout" %}" class="d-inline w-100">
+            {% csrf_token %}
+            <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt"></i> {% trans "Logout" %}</button>
+          </form>
         </div>
       </li>
     </ul>

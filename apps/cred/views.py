@@ -6,7 +6,7 @@ from django.http import HttpResponseRedirect, JsonResponse, HttpResponse, Http40
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from apps.cred.models import Project, Cred, Attachment, CredAudit, Tag, CredChangeQ, CredentialIcon
 from apps.cred.search import cred_search
