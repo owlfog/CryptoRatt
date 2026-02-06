@@ -8,7 +8,7 @@ import ldap
 import os
 from django_auth_ldap.config import LDAPSearch
 from datetime import timedelta
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 import uuid
 uuid._uuid_generate_random = None
@@ -34,7 +34,6 @@ DEBUG = confgetbool('ratticweb', 'debug', False)
 
 # the Internationalization Settings
 USE_I18N = True
-USE_L10N = True
 
 LOCALE_PATHS = (
     'apps/locale',
@@ -54,7 +53,8 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
 
-MIDDLEWARE = (
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'apps.account.sessions.SessionMiddleware',
@@ -62,10 +62,8 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
 
     # Custom Middleware
-    'mozilla_django_oidc.middleware.SessionRefresh',
     'django_otp.middleware.OTPMiddleware',
     'apps.account.middleware.StrictAuthentication',
     'apps.account.middleware.PasswordExpirer',
@@ -74,7 +72,7 @@ MIDDLEWARE = (
     'apps.ratticweb.middleware.CSPMiddleware',
     'apps.ratticweb.middleware.HSTSMiddleware',
     'apps.ratticweb.middleware.DisableContentTypeSniffing',
-)
+]
 
 # Custom session engine 
 SESSION_ENGINE = 'apps.account.sessions'
@@ -121,7 +119,7 @@ LOCAL_APPS = (
     'apps.help',
 )
 
-INSTALLED_APPS = (
+INSTALLED_APPS = LOCAL_APPS + (
     'django.contrib.auth',
     'django.contrib.sessions',
     'django.contrib.contenttypes',
@@ -134,7 +132,7 @@ INSTALLED_APPS = (
     'django_otp.plugins.otp_totp',
     'two_factor',
     'tastypie',
-) + LOCAL_APPS
+)
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
@@ -223,8 +221,8 @@ LOGGING['loggers']['django.request']['level'] = config.get('ratticweb', 'logleve
 
 # [filepaths]
 HELP_SYSTEM_FILES = confget('filepaths', 'help', False)
-MEDIA_ROOT = confget('filepaths', 'media', '')
-STATIC_ROOT = confget('filepaths', 'static', '')
+MEDIA_ROOT = confget('filepaths', 'media', '/app/media')
+STATIC_ROOT = confget('filepaths', 'static', '/app/static')
 
 # [database]
 DATABASES = {
@@ -245,15 +243,21 @@ BACKUP_S3_BUCKET = confget("backup", "s3_bucket", None)
 BACKUP_RECIPIENTS = confget("backup", "recipients", None)
 
 # [email]
-# SMTP Mail Opts
-EMAIL_BACKEND = config.get('email', 'backend')
-EMAIL_FILE_PATH = config.get('email', 'filepath')
-EMAIL_HOST = config.get('email', 'host')
-EMAIL_PORT = config.get('email', 'port')
-EMAIL_HOST_USER = config.get('email', 'user')
-EMAIL_HOST_PASSWORD = config.get('email', 'password')
-EMAIL_USE_TLS = confgetbool('email', 'usetls', False)
-DEFAULT_FROM_EMAIL = config.get('email', 'from_email')
+# SMTP Mail Opts - can be configured via config file or Django admin
+EMAIL_FROM_CONFIG = 'email' in config.sections()
+if EMAIL_FROM_CONFIG:
+    EMAIL_BACKEND = config.get('email', 'backend')
+    EMAIL_FILE_PATH = config.get('email', 'filepath')
+    EMAIL_HOST = config.get('email', 'host')
+    EMAIL_PORT = config.get('email', 'port')
+    EMAIL_HOST_USER = config.get('email', 'user')
+    EMAIL_HOST_PASSWORD = config.get('email', 'password')
+    EMAIL_USE_TLS = confgetbool('email', 'usetls', False)
+    DEFAULT_FROM_EMAIL = config.get('email', 'from_email')
+else:
+    # Use database-backed email settings (configurable via Django admin)
+    EMAIL_BACKEND = 'apps.staff.email_backend.DatabaseEmailBackend'
+    DEFAULT_FROM_EMAIL = 'noreply@example.com'
 
 # [ldap]
 LDAP_ENABLED = 'ldap' in config.sections()
@@ -340,6 +344,7 @@ if SSO_ENABLED:
     AUTHENTICATION_BACKENDS += (
         'apps.ratticweb.oidc_auth_backend.OIDCAuthBackend',
     )
+    MIDDLEWARE.insert(0, 'mozilla_django_oidc.middleware.SessionRefresh')
 
 # Passwords expiry settings
 if LDAP_ENABLED or SSO_ENABLED:
@@ -351,3 +356,15 @@ else:
         PASSWORD_EXPIRY = False
     except ValueError:
         PASSWORD_EXPIRY = False
+
+# Celery Configuration
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+# Default primary key field type for Django 4.x
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+

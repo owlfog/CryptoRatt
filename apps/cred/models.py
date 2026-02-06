@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models import Q
 from django.contrib import admin
 from django.contrib.auth.models import User, Group
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.forms.models import model_to_dict
 from django.utils.timezone import now
 from django.conf import settings

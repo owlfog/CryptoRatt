@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User, Group
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.forms import ModelForm, Form, MultipleChoiceField, ModelMultipleChoiceField, SelectMultiple, CharField, PasswordInput, CheckboxInput, TextInput, FileField, ClearableFileInput
 
 from apps.cred.models import CredAudit
@@ -70,7 +70,7 @@ class UserForm(ModelForm):
 class GroupForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(ModelForm, self).__init__(*args, **kwargs)
-        if self.instance:
+        if self.instance and self.instance.pk:
             self.fields["users"].initial = (
                 self.instance.user_set.all().values_list(
                     'id', flat=True

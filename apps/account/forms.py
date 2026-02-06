@@ -1,12 +1,13 @@
 from django.forms import ModelForm, CharField, PasswordInput, CheckboxInput, SelectMultiple, Select, FileField, ClearableFileInput
 from django.contrib.auth.forms import SetPasswordForm
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from apps.account.models import UserProfile, ApiKey
 
 
 class LDAPPassChangeForm(SetPasswordForm):
     old_password = CharField(label=_("Old password"), widget=PasswordInput)
+    field_order = ['old_password', 'new_password1', 'new_password2']
 
     def clean_old_password(self):
         from django_auth_ldap.backend import LDAPBackend
@@ -62,5 +63,3 @@ class ApiKeyForm(ModelForm):
         if self.instance.expires < self.instance.created:
             self.instance.expires = self.instance.created
         return super(ApiKeyForm, self).save()
-
-LDAPPassChangeForm.base_fields.keyOrder = ['old_password', 'new_password1', 'new_password2']

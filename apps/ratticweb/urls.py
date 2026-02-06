@@ -2,16 +2,21 @@ from two_factor.urls import urlpatterns as django_twofactor_urls
 import django.contrib.admindocs.urls
 from django.urls import path, re_path, include
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.views.static import serve
 from tastypie.api import Api
 from apps.cred.api import CredResource, TagResource
 from apps.staff.api import GroupResource
 from django.conf import settings
+import os
 
 import apps.ratticweb.views
 import apps.account.urls
 import apps.cred.urls, apps.cred.views
 import apps.staff.urls
 import apps.help.urls
+
+# Get the base directory for static files
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 app_name = "ratticweb"
 
@@ -63,9 +68,16 @@ urlpatterns += [
 ]
 
 
-# Serve the static files from the right location in dev mode
+# Serve the static files
 if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
+else:
+    # In production, serve static files from STATIC_ROOT
     urlpatterns += [
-        path('media/<slug:path>', django.views.static.serve, {'document_root': settings.MEDIA_ROOT})
+        re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
+    ]
+
+if settings.MEDIA_ROOT:
+    urlpatterns += [
+        re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     ]

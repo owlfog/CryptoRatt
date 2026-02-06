@@ -30,11 +30,10 @@ def base_template_reqs(request):
 def logo_selector(request):
     cntx = {}
 
-    tz = timezone.get_current_timezone()
-    time = tz.normalize(timezone.now())
+    now = timezone.localtime(timezone.now())
 
-    if ((time.hour > 20 and time.hour < 24) or
-       (time.hour >= 0 and time.hour < 6)):
+    if ((now.hour > 20 and now.hour < 24) or
+       (now.hour >= 0 and now.hour < 6)):
         cntx['rattic_icon'] = 'rattic/img/rattic_icon_sleeping.png'
         cntx['rattic_logo'] = 'rattic/img/rattic_logo_sleeping.svg'
 

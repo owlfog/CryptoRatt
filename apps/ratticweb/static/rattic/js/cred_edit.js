@@ -125,16 +125,53 @@ function showPassword() {
   }
 }
 
-// set added filenames at files upload field
-function updateFilesUploadField() {
-  var uploadFiles = e.target.files;
-  var fileList = '';
+// Accumulated files storage
+var accumulatedFiles = new DataTransfer();
 
-  for (var i = 0; i < uploadFiles.length; ++i) {
-    fileList = fileList + ' ' + uploadFiles[i].name
+// set added filenames at files upload field
+function updateFilesUploadField(input) {
+  // Add new files to accumulated list
+  for (var i = 0; i < input.files.length; i++) {
+    accumulatedFiles.items.add(input.files[i]);
+  }
+  
+  // Update the input with accumulated files
+  input.files = accumulatedFiles.files;
+  
+  var fileList = '';
+  var totalFiles = accumulatedFiles.files.length;
+
+  if (totalFiles === 0) {
+    fileList = 'Choose file';
+  } else if (totalFiles === 1) {
+    fileList = accumulatedFiles.files[0].name;
+  } else {
+    fileList = totalFiles + ' files selected';
   }
 
-  $('#upload-field-label').text(fileList)
+  $('#upload-field-label').text(fileList);
+}
+
+// Remove a file from accumulated list
+function removeAccumulatedFile(index) {
+  accumulatedFiles.items.remove(index);
+  $('#id_uploads')[0].files = accumulatedFiles.files;
+  updateFileListDisplay();
+}
+
+function updateFileListDisplay() {
+  var totalFiles = accumulatedFiles.files.length;
+  var fileList = '';
+  
+  if (totalFiles === 0) {
+    fileList = 'Choose file';
+  } else if (totalFiles === 1) {
+    fileList = accumulatedFiles.files[0].name;
+  } else {
+    fileList = totalFiles + ' files selected';
+  }
+  
+  $('#upload-field-label').text(fileList);
 }
 
 $(document).ready(function () {
@@ -186,7 +223,7 @@ $(document).ready(function () {
 
   // add upload filenames at upload files panel
   $('#id_uploads').change(function () {
-    updateFilesUploadField();
+    updateFilesUploadField(this);
   });
 
   // register modal password slider function

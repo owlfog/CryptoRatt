@@ -1,0 +1,44 @@
+# Docker configuration example for RatticWeb
+# Copy this file to conf/local.cfg and adjust as needed
+
+[ratticweb]
+debug = false
+timezone = Europe/Moscow
+passwordexpirydays = 90
+max_attachments = 10
+urlroot = /
+hostname = localhost
+loglevel = ERROR
+max_attachment_size = 2097152
+session_cookie_age = 1800
+
+# IMPORTANT: Generate a new secret key for production!
+# python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+secretkey = change-me-in-production-use-django-secret-key-generator
+
+[filepaths]
+media = /app/media
+static = /app/static
+
+[database]
+engine = django.db.backends.mysql
+name = ratticdb
+user = rattic
+password = rattic_password
+host = db
+port = 3306
+
+[scheduler]
+change_queue_reminder_period = 0
+
+[email]
+backend = django.core.mail.backends.smtp.EmailBackend
+filepath =
+host = localhost
+port = 25
+usetls = false
+user =
+password =
+from_email = ratticdb@localhost
+
+[backup]

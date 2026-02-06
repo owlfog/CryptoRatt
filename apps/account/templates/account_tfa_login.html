@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static from staticfiles %}
+{% load static %}
 {% load i18n %}
 
 {% block content %}
@@ -15,6 +15,14 @@
     <div class="col-md-4">
         <form action="" method="post">{% csrf_token %}
         {{ wizard.management_form }}
+
+        {% if wizard.form.non_field_errors %}
+          <div class="alert alert-danger mb-3">
+            {% for error in wizard.form.non_field_errors %}
+              {{ error }}
+            {% endfor %}
+          </div>
+        {% endif %}
 
         {% for f in wizard.form %}
           <input class="form-control mb-2" type="{{ f.field.widget.input_type }}" placeholder="{{ f.name }}" name="{{ f.html_name }}" id="{{ f.id_for_label }}" autofocus required>
